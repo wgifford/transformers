@@ -1329,12 +1329,12 @@ class PatchTSMixerModel(PatchTSMixerPreTrainedModel):
     def forward(
         self,
         past_values: torch.Tensor,
-        observed_mask: Optional[torch.Tensor] = None,
+        past_observed_mask: Optional[torch.Tensor] = None,
         output_hidden_states: Optional[bool] = False,
         return_dict: Optional[bool] = None,
     ) -> PatchTSMixerModelOutput:
         r"""
-        observed_mask (`torch.FloatTensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
+        past_observed_mask (`torch.BoolTensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
             Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
             in `[0, 1]`:
                 - 1 for values that are **observed**,
@@ -1346,9 +1346,9 @@ class PatchTSMixerModel(PatchTSMixerPreTrainedModel):
         return_dict = return_dict if return_dict is not None else self.use_return_dict
 
         mask = None
-        if observed_mask is None:
-            observed_mask = torch.ones_like(past_values)
-        scaled_past_values, loc, scale = self.scaler(past_values, observed_mask)
+        if past_observed_mask is None:
+            past_observed_mask = torch.ones_like(past_values)
+        scaled_past_values, loc, scale = self.scaler(past_values, past_observed_mask)
 
         patched_x = self.patching(scaled_past_values)  # [batch_size x num_input_channels x num_patch x patch_length
 
@@ -1440,13 +1440,13 @@ class PatchTSMixerForPretraining(PatchTSMixerPreTrainedModel):
     def forward(
         self,
         past_values: torch.Tensor,
-        observed_mask: Optional[torch.Tensor] = None,
+        past_observed_mask: Optional[torch.Tensor] = None,
         output_hidden_states: Optional[bool] = False,
         return_loss: bool = True,
         return_dict: Optional[bool] = None,
     ) -> PatchTSMixerForPreTrainingOutput:
         r"""
-        observed_mask (`torch.FloatTensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
+        past_observed_mask (`torch.BoolTensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
             Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
             in `[0, 1]`:
                 - 1 for values that are **observed**,
@@ -1467,7 +1467,7 @@ class PatchTSMixerForPretraining(PatchTSMixerPreTrainedModel):
         # past_values: tensor [batch_size x context_length x num_input_channels]
         model_output = self.model(
             past_values,
-            observed_mask=observed_mask,
+            past_observed_mask=past_observed_mask,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )  # x.last_hidden_state: [batch_size x nvars x num_patch x d_model]
@@ -1643,14 +1643,14 @@ class PatchTSMixerForPrediction(PatchTSMixerPreTrainedModel):
     def forward(
         self,
         past_values: torch.Tensor,
-        observed_mask: Optional[torch.Tensor] = None,
+        past_observed_mask: Optional[torch.Tensor] = None,
         future_values: Optional[torch.Tensor] = None,
         output_hidden_states: Optional[bool] = False,
         return_loss: bool = True,
         return_dict: Optional[bool] = None,
     ) -> PatchTSMixerForPredictionOutput:
         r"""
-        observed_mask (`torch.FloatTensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
+        past_observed_mask (`torch.BoolTensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
             Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
             in `[0, 1]`:
                 - 1 for values that are **observed**,
@@ -1683,7 +1683,7 @@ class PatchTSMixerForPrediction(PatchTSMixerPreTrainedModel):
         # past_values: tensor [batch_size x context_length x num_input_channels]
         model_output = self.model(
             past_values,
-            observed_mask=observed_mask,
+            past_observed_mask=past_observed_mask,
             output_hidden_states=output_hidden_states,
             return_dict=return_dict,
         )  # model_output: [batch_size x nvars x num_patch x d_model]
@@ -1760,7 +1760,7 @@ class PatchTSMixerForPrediction(PatchTSMixerPreTrainedModel):
     def generate(
         self,
         past_values: torch.Tensor,
-        observed_mask: Optional[torch.Tensor] = None,
+        past_observed_mask: Optional[torch.Tensor] = None,
     ) -> SamplePatchTSMixerPredictionOutput:
         """
         Generate sequences of sample predictions from a model with a probability distribution head.
@@ -1769,7 +1769,7 @@ class PatchTSMixerForPrediction(PatchTSMixerPreTrainedModel):
             past_values (`torch.FloatTensor` of shape `(batch_size, sequence_length, num_input_channels)`):
                 Past values of the time series that serves as context in order to predict the future.
 
-            observed_mask (`torch.BoolTensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
+            past_observed_mask (`torch.BoolTensor` of shape `(batch_size, sequence_length, num_input_channels)`, *optional*):
                 Boolean mask to indicate which `past_values` were observed and which were missing. Mask values selected
                 in `[0, 1]`:
 
@@ -1787,7 +1787,7 @@ class PatchTSMixerForPrediction(PatchTSMixerPreTrainedModel):
         outputs = self(
             past_values=past_values,
             future_values=None,
-            observed_mask=observed_mask,
+            past_observed_mask=past_observed_mask,
             output_hidden_states=False,
         )
 

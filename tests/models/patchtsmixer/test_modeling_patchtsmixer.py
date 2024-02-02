@@ -413,14 +413,14 @@ class PatchTSMixerModelTest(ModelTesterMixin, PipelineTesterMixin, unittest.Test
             if model_class == PatchTSMixerForPretraining:
                 expected_arg_names = [
                     "past_values",
-                    "observed_mask",
+                    "past_observed_mask",
                     "output_hidden_states",
                     "return_loss",
                 ]
             elif model_class == PatchTSMixerModel:
                 expected_arg_names = [
                     "past_values",
-                    "observed_mask",
+                    "past_observed_mask",
                     "output_hidden_states",
                 ]
             elif model_class in get_values(MODEL_FOR_TIME_SERIES_CLASSIFICATION_MAPPING) or model_class in get_values(
@@ -436,7 +436,7 @@ class PatchTSMixerModelTest(ModelTesterMixin, PipelineTesterMixin, unittest.Test
                 # PatchTSMixerForPrediction
                 expected_arg_names = [
                     "past_values",
-                    "observed_mask",
+                    "past_observed_mask",
                     "future_values",
                     "output_hidden_states",
                     "return_loss",
